@@ -9,6 +9,20 @@ import { fileURLToPath } from 'node:url';
 const root = process.env.MKM_OUT ? path.resolve(process.env.MKM_OUT) : path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.xml': 'application/xml', '.webmanifest': 'application/manifest+json' };
 const prefix = (process.env.MKM_PREFIX ?? '').replace(/\/+$/, ''); // e.g. /MKM to simulate a project page
+// Apply the site's own _headers file (security headers and caching), as Netlify / Cloudflare Pages would.
+async function loadHeaderRules() {
+  try {
+    const rules = [];
+    for (const line of (await readFile(path.join(root, '_headers'), 'utf8')).split('\n')) {
+      if (!line.trim()) continue;
+      if (!/^\s/.test(line)) { rules.push({ pattern: line.trim(), headers: {} }); continue; }
+      const [name, ...value] = line.trim().split(':');
+      rules.at(-1).headers[name.trim()] = value.join(':').trim();
+    }
+    return rules;
+  } catch { return []; }
+}
+const matches = (pattern, pathname) => pattern.endsWith('*') ? pathname.startsWith(pattern.slice(0, -1)) : pathname === pattern;
 const compressible = new Set(['.html', '.css', '.js', '.json', '.txt', '.svg', '.xml', '.webmanifest']);
 
 const server = http.createServer(async (req, res) => {
@@ -23,6 +37,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname.split('/').some(part => part.startsWith('.') && part !== '')) { res.writeHead(404); res.end('Not found'); return; }
     let filename = path.resolve(root, '.' + pathname);
     if (!filename.startsWith(root + path.sep) && filename !== root) { res.writeHead(403); res.end('Forbidden'); return; }
+    const headerRules = await loadHeaderRules(); // re-read each time so a rebuild is picked up
     let status = 200;
     try {
       if ((await stat(filename)).isDirectory()) {
@@ -33,7 +48,7 @@ const server = http.createServer(async (req, res) => {
     let data = await readFile(filename);
     const ext = path.extname(filename);
     const headers = { 'Content-Type': types[ext] ?? 'application/octet-stream', 'X-Content-Type-Options': 'nosniff' };
-    if (pathname.startsWith('/assets/')) headers['Cache-Control'] = 'public, max-age=3600';
+    for (const rule of headerRules) if (matches(rule.pattern, pathname)) Object.assign(headers, rule.headers);
     const accepts = req.headers['accept-encoding'] ?? '';
     if (compressible.has(ext)) {
       headers.Vary = 'Accept-Encoding';
