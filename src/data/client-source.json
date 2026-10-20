@@ -1,0 +1,61 @@
+{
+  "brand": "MKM Beauty",
+  "parent_business": "MKM Services",
+  "prices_currency": "USD",
+  "length_prices": [
+    {
+      "inches": 16,
+      "listed_usd": 200
+    },
+    {
+      "inches": 18,
+      "listed_usd": 250
+    },
+    {
+      "inches": 20,
+      "listed_usd": 320
+    },
+    {
+      "inches": 22,
+      "listed_usd": 370
+    },
+    {
+      "inches": 24,
+      "listed_usd": 420
+    },
+    {
+      "inches": 26,
+      "listed_usd": 470
+    },
+    {
+      "inches": 28,
+      "listed_usd": 520
+    },
+    {
+      "inches": 30,
+      "listed_usd": 600
+    },
+    {
+      "inches": 32,
+      "listed_usd": 670
+    }
+  ],
+  "available_texture_labels": [
+    "Straight",
+    "Body Wave",
+    "Kinky Straight",
+    "Water Wave",
+    "Kinky Curly",
+    "Wavy"
+  ],
+  "price_qualification": "Client-provided length prices; texture-dependent prices, availability, taxes and shipping have not been verified. Confirm before order.",
+  "whatsapp_number": "",
+  "contact_email": "",
+  "stock_levels": null,
+  "delivery_details": null,
+  "return_policy": null,
+  "product_types": [
+    "Human hair, wigs and hair extensions (exact SKUs to confirm)"
+  ],
+  "important": "Do not invent URLs, phone numbers, reviews, registrations, promotional offers or product claims."
+}
