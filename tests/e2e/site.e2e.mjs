@@ -326,3 +326,69 @@ test('hosted in a sub-folder (like a GitHub Pages project page) everything still
   assert.deepEqual(failed, []);
   await context.close();
 });
+
+test('the real Content-Security-Policy is enforced and nothing is blocked across routes and interactions', { skip }, async () => {
+  const violations = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await context.addInitScript(() => { window.__csp = []; addEventListener('securitypolicyviolation', e => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`)); });
+  const page = await context.newPage();
+  page.on('console', m => /Content Security Policy|Refused to/i.test(m.text()) && violations.push(m.text()));
+  const headers = (await page.goto(base + '/')).headers();
+  assert.match(headers['content-security-policy'], /script-src 'self' 'sha256-/, 'the server must send the CSP');
+  for (const route of ['/', '/care/', '/beauty/', '/tax/', '/shop/hair-enquiry/', '/contact/']) {
+    await page.goto(base + route);
+    await page.waitForTimeout(500);
+    violations.push(...await page.evaluate(() => window.__csp));
+  }
+  assert.deepEqual(violations, []);
+  await context.close();
+});
+
+test('if the main script fails to load, nothing stays hidden and navigation still works', { skip }, async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await context.newPage();
+  await page.route('**/assets/js/main.js', route => route.abort());
+  await page.goto(base + '/care/');
+  await page.waitForFunction(() => !document.documentElement.classList.contains('js'), null, { timeout: 7000 });
+  const hidden = await page.evaluate(() => [...document.querySelectorAll('[data-reveal]:not([data-reveal=curtain])')].filter(e => getComputedStyle(e).opacity === '0').length);
+  assert.equal(hidden, 0);
+  assert.equal(await page.locator('.site-nav').isVisible(), true, 'links sit in a strip when the menu cannot open');
+  assert.equal(await page.locator('.menu-toggle').isVisible(), false);
+  await page.locator('.site-nav a[href$="tax/"]').click();
+  await page.waitForURL('**/tax/');
+  await context.close();
+});
+
+test('with JavaScript disabled the contact page explains itself and every page stays readable', { skip }, async () => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto(base + '/contact/');
+  assert.equal(await page.locator('#contact-form').isVisible(), false);
+  assert.match(await page.locator('.contact__noscript').innerText(), /needs JavaScript/);
+  for (const route of ['/', '/care/', '/beauty/', '/tax/']) {
+    await page.goto(base + route);
+    const hidden = await page.evaluate(() => [...document.querySelectorAll('[data-reveal],[data-split]')].filter(e => getComputedStyle(e).opacity === '0').length);
+    assert.equal(hidden, 0, route);
+  }
+  await context.close();
+});
+
+test('every interactive control is at least 44px on a phone, on every route', { skip }, async () => {
+  const { page, context } = await open(base + '/', { width: 390, height: 844, mobile: true });
+  for (const route of routes) {
+    await page.goto(base + route);
+    const total = await page.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y < total; y += 600) { await page.evaluate(v => scrollTo(0, v), y); await page.waitForTimeout(20); }
+    await page.waitForTimeout(700);
+    const small = await page.evaluate(() => [...document.querySelectorAll('a[href], button, select, textarea, input:not([type=hidden])')].filter(el => {
+      const cs = getComputedStyle(el);
+      if (cs.visibility === 'hidden' || cs.display === 'none' || el.closest('[inert], [hidden], .menu, .dock:not(.is-visible), dialog:not([open])')) return false;
+      if (el.tagName === 'A' && cs.display === 'inline' && el.closest('p, .field__hint, .image-note, .confirm__note')) return false; // inline links in running text
+      if (el.tagName === 'INPUT' && /radio|checkbox/.test(el.type) && cs.opacity === '0') return false; // sits under a 44px label
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && (r.width < 43.5 || r.height < 43.5);
+    }).map(el => `${el.tagName} ${el.className} "${(el.textContent || '').trim().slice(0, 24)}"`));
+    assert.deepEqual(small, [], route);
+  }
+  await context.close();
+});

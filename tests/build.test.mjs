@@ -153,3 +153,49 @@ test('every URL is document-relative so the site works at a domain root or in an
   assert.match(read(preview.out, 'assets/site.css'), /url\(fonts\/font-2\.woff2\)/);
   assert.doesNotMatch(read(preview.out, 'assets/js/hair.js'), /[`'"]\/assets\//);
 });
+
+test('generated HTML is valid where it matters: no bare ampersands, no empty src, no labels on plain lists', () => {
+  for (const file of htmlFiles(preview.out)) {
+    const html = read(preview.out, file).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<textarea[\s\S]*?<\/textarea>/g, '');
+    assert.doesNotMatch(html, /&(?![a-zA-Z][a-zA-Z0-9]*;|#\d+;|#x[0-9a-fA-F]+;)/, `${file} has an unencoded ampersand`);
+    assert.doesNotMatch(html, /\ssrc=""/, `${file} has an empty src`);
+    assert.doesNotMatch(html, /<ul[^>]*aria-label/, `${file} labels a plain list`);
+  }
+});
+
+test('older browsers are covered: vh before svh/dvh, hidden before clip, and forced-colors rules exist', () => {
+  const css = read(preview.out, 'assets/site.css');
+  assert.match(css, /min-height:100vh;min-height:100svh/);
+  assert.match(css, /overflow:hidden;overflow:clip/);
+  assert.match(css, /@media \(forced-colors:active\)/);
+  for (const m of css.matchAll(/([a-z-]+):([^;{}]*\d(?:\.\d+)?[sd]vh[^;{}]*)[;}]/g)) {
+    const [, prop, value] = m;
+    const fallback = `${prop}:${value.replace(/([sd])vh/g, 'vh')}`;
+    assert.ok(css.includes(fallback), `no vh fallback for ${prop}:${value}`);
+  }
+});
+
+test('contact copy makes no funding-scheme claims and the order FAQ adapts to the real contact channels', () => {
+  assert.doesNotMatch(read(preview.out, 'assets/js/contact.js'), /NDIS/);
+  assert.match(read(preview.out, 'shop/hair-enquiry/index.html'), /You can copy it and send it to Monica yourself/);
+  const withChannels = build({ WHATSAPP_NUMBER: '61400000000', CONTACT_EMAIL: 'hello@example.test' });
+  assert.match(read(withChannels.out, 'shop/hair-enquiry/index.html'), /You can send it to Monica on WhatsApp or by email, or copy it\./);
+});
+
+test('failsafe: the bootstrap drops the scripting flag if the main script never starts, and main.js reports it started', () => {
+  const html = read(preview.out, 'index.html');
+  assert.match(html, /setTimeout\(function\(\)\{if\(!h\.classList\.contains\('js-ok'\)\)h\.classList\.remove\('js','pre','pre-static'\);\},5000\)/);
+  assert.match(read(preview.out, 'assets/js/main.js'), /classList\.add\('js-ok'\)/);
+  assert.match(read(preview.out, 'assets/site.css'), /html:not\(\.js\) \.menu-toggle\{display:none\}/);
+  assert.match(read(preview.out, 'assets/site.css'), /html:not\(\.js\) #contact-form\{display:none\}/);
+});
+
+test('every page also carries the CSP as a <meta> fallback for hosts that ignore _headers, and it matches the header policy', () => {
+  const header = meta(read(preview.out, '_headers'), /Content-Security-Policy: (.*)/);
+  for (const file of htmlFiles(preview.out)) {
+    const tag = meta(read(preview.out, file), /<meta http-equiv="Content-Security-Policy" content="([^"]*)"/);
+    assert.ok(tag, `${file} has no meta CSP`);
+    assert.equal(`${tag}; frame-ancestors 'self'`, header, `${file} meta CSP differs from the header`);
+    assert.doesNotMatch(tag, /unsafe-inline|unsafe-eval|frame-ancestors/);
+  }
+});
