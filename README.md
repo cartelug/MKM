@@ -78,19 +78,22 @@ The same can be done without editing files: `SITE_URL=https://www.example.com SI
 * **Arrival (logo pre-loader):** about 1.2 seconds, once per browser session. Hairline strokes trace the real lettermark, a light sweep and three soft colour pulses pass through it, then the genuine logo settles and the page wipes upward. Click or any key skips it. It finishes by CSS alone if scripting fails, and under `prefers-reduced-motion` it becomes a brief static splash.
 * **Motion language:** only transform and opacity are animated, with refined easing, 2-4px depth, 3-6% image drift, word-by-word headings, curtain image reveals, a pinned horizontal hair gallery, magnetic buttons, a fine cursor and cross-document page transitions. Everything sits behind `prefers-reduced-motion`; low-power or data-saver devices drop the heavier effects.
 * **Accessibility:** skip link, landmarks, one H1 per page, labelled forms with live-region errors, visible focus, 44px tap targets, keyboard-operable menus, accordions, scrollers and lightbox, focus restored after dialogs, inert background while the menu is open. axe-core reports no WCAG 2.2 AA violations on any route (see `docs/QA.md`).
-* **Security:** strict Content-Security-Policy in `_headers` (`script-src 'self'` plus the hash of one tiny inline bootstrap script, no inline styles).
+* **Security:** strict Content-Security-Policy (`script-src 'self'` plus the hash of one tiny inline bootstrap script, no inline styles), sent in `_headers` and repeated as a `<meta>` tag so hosts that ignore `_headers` (such as GitHub Pages) are covered. It is enforced by the preview server and by the browser tests, which fail on any violation.
+* **Resilience:** if scripting is off or `main.js` fails to start within 5 seconds, a failsafe drops the scripting flag so nothing stays hidden, the header becomes solid and the navigation links appear as a strip (the menu cannot open without scripts). The contact form then explains itself and points to the Care website.
+* **Older and special browsers:** `vh` fallbacks before `svh`/`dvh`, `overflow: hidden` before `overflow: clip`, and a forced-colors (Windows high contrast) stylesheet keep controls, selected states and focus visible.
 
 ## Verification
 
-`npm test` runs 33 Node tests and the integrity check:
+`npm test` runs 47 Node tests and the integrity check:
 
 * all 540 hair combinations, original data agreement, WhatsApp and email link encoding, colour preference messages;
 * every service, topic and general enquiry message, including bounds and cleaning;
 * a full build in preview and live mode (noindex, canonical, sitemap, robots, manifest, social image, unique titles and descriptions, JSON-LD, CSP hash, no inline styles, no invented claims, the official Care website kept exactly);
 * the motion rules (every hidden start state sits behind a reduced-motion guard, arrival length and skip, transform and opacity only);
+* the build tools (minifier, older-browser fallbacks, ampersand encoding, relative URLs), valid generated HTML, and the CSP meta tag matching the header policy;
 * every route, fragment, ARIA reference, image, script and stylesheet in `dist/`.
 
-`npm run test:e2e` drives a real browser through the contact concierge, WhatsApp mode, hair builder (including deep links), lightbox, tax quick enquiry, shop filter, accordions, scroller, dock, mobile menu, arrival and reduced motion, and checks every route from 320 to 1440px for overflow. Playwright is optional and not a dependency: `npm i -D playwright && npx playwright install chromium`, or set `PLAYWRIGHT_MODULE`. Without it the tests skip.
+`npm run test:e2e` drives a real browser (19 tests) through the contact concierge, WhatsApp mode, hair builder (including deep links), lightbox, tax quick enquiry, shop filter, accordions, scroller, dock, mobile menu, arrival, reduced motion, enforced CSP, hosting in a sub-folder, a failed `main.js`, JavaScript disabled, and 44px tap targets on every route, and checks every route from 320 to 1440px for overflow. Playwright is optional and not a dependency: `npm i -D playwright && npx playwright install chromium`, or set `PLAYWRIGHT_MODULE`. Without it the tests skip.
 
 ## Media and fonts
 
