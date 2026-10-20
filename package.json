@@ -1,14 +1,17 @@
 {
-  "name": "mkm-beauty",
-  "version": "1.0.0",
+  "name": "mkm-services",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "MKM Beauty — editorial hair collection and enquiry website",
+  "description": "MKM Services V2: the House of MKM, a premium editorial website for Care, Beauty and Tax",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs && python3 scripts/check-site.py",
     "start": "node scripts/serve.mjs",
-    "check": "npm run build && npm test"
+    "check": "npm run build && npm test",
+    "test:e2e": "node --test tests/e2e/*.e2e.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
