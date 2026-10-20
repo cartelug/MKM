@@ -1,61 +1,88 @@
-# MKM Services
+# MKM Services · V2 "The House of MKM"
 
-A complete, fifteen-page website for MKM Care Services, MKM Beauty and MKM Tax Return Services, using the client's approved MKM lettermark, real photographs, and exact USD length-price references. Built with semantic HTML, CSS and small JavaScript modules; no third-party runtime dependencies.
+A premium, editorial website for **MKM Care Services**, **MKM Beauty** and **MKM Tax Return Services**, with Monica as the warm, founder-led face. It uses the client's approved lettermark, real photography and the exact USD length-price references. Built with semantic HTML, one stylesheet and small ES modules. No runtime dependencies, no tracking.
+
+Each division is its own colour "room" (Care moss, Beauty oxblood, Tax ink blue) inside one shared grid, type system and level of craft.
 
 ## Run
 
-Requires Node 20+ and Python 3 for the source checks. No package installation is required.
+Requires Node 20+ and Python 3 (for the source checks). No package installation is needed.
 
 ```sh
-npm run build
-npm test
-npm start
+npm run build   # writes dist/
+npm test        # node tests + dist integrity check
+npm start       # preview at http://localhost:4173 (gzip/brotli, real 404s, cache headers)
+npm run check   # build + test
+npm run test:e2e   # optional browser tests (needs Playwright, see below)
 ```
 
-Open `http://localhost:4173`. Build output is in `dist/`, ready for static hosting that supports directory index pages. The source uses root-relative URLs, so deploy at the domain root rather than a GitHub Pages repository subpath.
+`dist/` is committed because the static host serves it. Rebuild before committing. The source uses root-relative URLs, so deploy at a domain root.
 
 ## Pages
 
-`/`, `/care/`, `/beauty/`, `/tax/`, `/beauty/skincare/`, `/beauty/home-decor/`, `/beauty/hair/`, `/shop/`, `/shop/hair-enquiry/`, `/textures/`, `/about/`, `/hair-care/`, `/delivery-returns/`, `/contact/`, `/privacy/`. Each route has its own HTML, title and description. Includes a custom 404.
+`/`, `/care/`, `/beauty/`, `/tax/`, `/beauty/hair/`, `/beauty/skincare/`, `/beauty/home-decor/`, `/shop/`, `/shop/hair-enquiry/`, `/textures/`, `/hair-care/`, `/delivery-returns/`, `/about/`, `/contact/`, `/privacy/`, plus a custom 404. Every route has its own title, description, social tags, canonical URL (once the domain is set) and structured data.
 
-## Connect WhatsApp
+## Source layout
 
-1. Edit `src/config/site.js`.
-2. Set `whatsappNumber` to Monica's confirmed number with country code, digits only (no `+`, spaces or punctuation).
-3. Run `npm run check` and deploy the new `dist/`.
-
-With an empty or invalid number, the action opens a fully working preview with the selected details and a copyable message. A valid number switches the label and opens WhatsApp with an encoded draft. The visitor must send it. The website never sends messages or takes payment.
-
-## Change content without redesigning
-
-| File | What to edit |
+| Path | What lives there |
 | --- | --- |
-| `src/config/site.js` | WhatsApp, preview mode, logo paths and shared brand settings |
-| `src/data/hair.js` | Single runtime price list, texture labels, photo mapping, descriptions and gallery |
-| `src/data/client-source.json` | Original supplied data retained for comparison |
-| `src/templates.mjs` | Hair pages, policy wording, global navigation and footer |
-| `src/service-pages.mjs` | Home, Care, Beauty, Tax, skincare, décor, About and Contact |
-| `src/data/services.js` | Service descriptions, enquiry topics and message composition |
-| `src/group.css` | Umbrella identity, division colours and redesigned layouts |
-| `src/styles.css` | Design tokens, typography, desktop and mobile layouts |
-| `public/assets/` | Real media, exact logo variants and self-hosted fonts |
+| `src/config/site.js` | Public settings: preview mode, domain, WhatsApp number, email, Care website, descriptions |
+| `src/config/runtime.mjs` | Node-only view of those settings, with deploy-time environment overrides |
+| `src/data/hair.js` | The single price list, texture labels, photo mapping and art-directed crops |
+| `src/data/services.js` | Services, topics, smart call-to-action copy, enquiry message composition |
+| `src/order.js` | Hair enquiry maths and messages, WhatsApp and email link builders |
+| `src/data/logo-paths.json` | Vector trace of the real lettermark (for line-draw moments only) |
+| `src/lib/` | `layout.mjs` (document shell, header, menu, dock, footer, preloader), `sections.mjs` (shared editorial sections), `html.mjs` (helpers, image sets) |
+| `src/pages/` | One file per area: `home`, `care`, `beauty`, `tax`, `contact`, `about`, `hair`, `legal`; `index.mjs` is the route table |
+| `src/styles/` | Ordered CSS: tokens, chrome, components, home, pages, motion. Concatenated and minified into `assets/site.css` |
+| `src/scripts/` | ES modules: `main.js` entry, `motion.js`, `header.js`, `preloader.js`, plus lazily loaded features (`contact`, `hair`, `lightbox`, `hscroll`, ...) |
+| `public/assets/` | Brand marks, photography, responsive derivatives, fonts |
+| `scripts/assets/` | One-off Python/Node scripts that produced the generated assets (see its README) |
 
-After prices are approved or revised, update the runtime data and corresponding client source so the comparison test documents the new agreed references. Product photos are intentionally described as inspiration until Monica approves associations.
+To change copy, edit the page file. To change colours, type or spacing, edit `src/styles/00-tokens.css`.
 
-## Approval before public launch
+## Connect real contact channels
 
-See `docs/CLIENT-APPROVAL.md`. Keep the preview private. Once all details are approved, update the relevant content and set `previewMode: false`; rebuild to remove the client-preview label and search-engine block. This setting does not change hosting access or make a site public by itself.
+Edit `src/config/site.js` (or set environment variables at deploy time) and rebuild:
+
+| Setting | Effect |
+| --- | --- |
+| `whatsappNumber` | Digits only with country code, no `+` (for example `61400000000`). Shows "Send on WhatsApp" in every enquiry confirmation |
+| `contactEmail` | Shows "Send by email" with the message prefilled |
+
+With neither set, confirmations offer **Copy message** only, and say so honestly. The website never sends anything itself: the visitor reviews the message and sends or copies it. No invented phone numbers, addresses or payment badges exist anywhere.
+
+## Going public
+
+The site is a private **client preview**: `previewMode: true` adds `noindex`, blocks crawlers in `robots.txt` and shows a small preview label. To launch:
+
+1. Set `siteUrl` (final origin, for example `https://www.example.com`), a contact channel, and `previewMode: false`.
+2. Run `npm run check`. The build refuses to go public without a domain and a real contact channel. Going public also switches on canonical URLs, `sitemap.xml`, the sitemap line in `robots.txt` and absolute social-image URLs.
+3. Work through `docs/CLIENT-APPROVAL.md`.
+
+The same can be done without editing files: `SITE_URL=https://www.example.com SITE_PREVIEW=false WHATSAPP_NUMBER=... npm run build`.
+
+## Motion, performance and accessibility
+
+* **Arrival (logo pre-loader):** about 1.2 seconds, once per browser session. Hairline strokes trace the real lettermark, a light sweep and three soft colour pulses pass through it, then the genuine logo settles and the page wipes upward. Click or any key skips it. It finishes by CSS alone if scripting fails, and under `prefers-reduced-motion` it becomes a brief static splash.
+* **Motion language:** only transform and opacity are animated, with refined easing, 2-4px depth, 3-6% image drift, word-by-word headings, curtain image reveals, a pinned horizontal hair gallery, magnetic buttons, a fine cursor and cross-document page transitions. Everything sits behind `prefers-reduced-motion`; low-power or data-saver devices drop the heavier effects.
+* **Accessibility:** skip link, landmarks, one H1 per page, labelled forms with live-region errors, visible focus, 44px tap targets, keyboard-operable menus, accordions, scrollers and lightbox, focus restored after dialogs, inert background while the menu is open. axe-core reports no WCAG 2.2 AA violations on any route (see `docs/QA.md`).
+* **Security:** strict Content-Security-Policy in `_headers` (`script-src 'self'` plus the hash of one tiny inline bootstrap script, no inline styles).
 
 ## Verification
 
-`npm test` checks all 540 combinations of nine lengths, six textures and quantities 1–10, original data agreement, WhatsApp number validation and exact message encoding. Service-topic message tests also cover all three divisions and bounded optional notes. It also checks every generated route, fragment, image, local asset, page title, main heading and duplicate ID.
+`npm test` runs 33 Node tests and the integrity check:
 
-Browser and assistive-technology testing remains necessary before public launch. See `docs/QA.md` for completed checks and the environment limitations.
+* all 540 hair combinations, original data agreement, WhatsApp and email link encoding, colour preference messages;
+* every service, topic and general enquiry message, including bounds and cleaning;
+* a full build in preview and live mode (noindex, canonical, sitemap, robots, manifest, social image, unique titles and descriptions, JSON-LD, CSP hash, no inline styles, no invented claims, the official Care website kept exactly);
+* the motion rules (every hidden start state sits behind a reduced-motion guard, arrival length and skip, transform and opacity only);
+* every route, fragment, ARIA reference, image, script and stylesheet in `dist/`.
+
+`npm run test:e2e` drives a real browser through the contact concierge, WhatsApp mode, hair builder (including deep links), lightbox, tax quick enquiry, shop filter, accordions, scroller, dock, mobile menu, arrival and reduced motion, and checks every route from 320 to 1440px for overflow. Playwright is optional and not a dependency: `npm i -D playwright && npx playwright install chromium`, or set `PLAYWRIGHT_MODULE`. Without it the tests skip.
 
 ## Media and fonts
 
-Client hair images are copied unchanged from the supplied kit. The four real editorial stock photographs have responsive WebP derivatives; see `docs/PHOTO-CREDITS.md`. Confirm their public-use rights before launch. The original lettermark proportions are preserved. Fonts are self-hosted Cormorant Garamond and DM Sans, with Georgia/Arial fallbacks and license notices in `public/assets/fonts/`.
+Client hair images and the lettermark come from the supplied kit and are only cropped and resized (`scripts/assets/`). Full uncropped photographs open in the lightbox. Four editorial stock photographs are used as illustration (`docs/PHOTO-CREDITS.md`); confirm public-use rights and replace them with approved MKM photography when available. Fonts are self-hosted Cormorant Garamond and DM Sans (WOFF2, licences alongside). The logo trace is mechanical (under 1% pixel difference from the supplied PNG) and is never shown as the logo itself.
 
-Service enquiries use a topic selector and optional browser-local message. No data is submitted to a backend; the visitor previews or copies the message. The Care link leads to the official client-supplied website.
-
-No accounts, analytics, tracking cookies, payment processor, order database or invented contact details are included. Deployment-specific access and hosting settings are in `.openai/hosting.json`.
+No accounts, analytics, tracking cookies, payment processor, order database or invented contact details are included. Deployment settings are in `.openai/hosting.json`.
