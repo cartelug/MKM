@@ -28,6 +28,6 @@ export function contact() {
 <button class="btn btn--solid btn--wide" type="submit" data-magnetic><span class="btn__fill" aria-hidden="true"></span><span class="btn__label">Prepare my enquiry</span><span class="btn__icon">${icon.arrow}</span></button>
 <p class="form__fine">Nothing is sent from this page. You will review your message, then send or copy it yourself.</p></form>
 <div id="contact-result" hidden tabindex="-1" data-confirm-root aria-live="polite"></div>
-<noscript><p class="contact__noscript">The enquiry form needs JavaScript. You can still reach the Care team through <a href="${site.careSite.url}" target="_blank" rel="noopener noreferrer">${site.careSite.label}</a>.</p></noscript></div></div></div></section>`,
+<p class="contact__noscript">The enquiry form needs JavaScript, which is not running. You can still reach the Care team through <a href="${site.careSite.url}" target="_blank" rel="noopener noreferrer">${site.careSite.label}</a>, or reload this page.</p></div></div></div></section>`,
   });
 }

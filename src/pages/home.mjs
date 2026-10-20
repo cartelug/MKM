@@ -38,7 +38,7 @@ const care = `<section class="chapter chapter--care" id="care" data-world="care"
 <div class="chapter__panel" data-reveal="panel"><p class="chapter__kicker"><span class="chapter__num">01</span>MKM Care Services</p>
 ${heading(2, 'Calm, considered support, <em>shaped around you.</em>', 'h-chapter')}
 <p class="chapter__text">Compassionate disability and community-based support, with people at the centre. A conversation with Monica is a gentle place to begin.</p>
-<ul class="quiet" data-stagger aria-label="What guides MKM Care"><li data-reveal><b>Person-led</b><span>Your needs and preferences set the direction.</span></li><li data-reveal><b>Practical support</b><span>Clear, workable next steps for everyday life.</span></li><li data-reveal><b>Community connection</b><span>Support that keeps you close to what matters.</span></li></ul>
+<ul class="quiet" data-stagger><li data-reveal><b>Person-led</b><span>Your needs and preferences set the direction.</span></li><li data-reveal><b>Practical support</b><span>Clear, workable next steps for everyday life.</span></li><li data-reveal><b>Community connection</b><span>Support that keeps you close to what matters.</span></li></ul>
 <div class="chapter__cta">${button('Discover Care Services', '/care/', { world: 'care' })}</div></div></div></section>`;
 
 const beauty = `<section class="chapter chapter--beauty" id="beauty" data-world="beauty" data-tone="dark"><span class="chapter__ghost" aria-hidden="true">Beauty</span>
@@ -51,7 +51,7 @@ const beauty = `<section class="chapter chapter--beauty" id="beauty" data-world=
 <div class="reel__item reel__item--mid" data-reveal="curtain">${media.hair.waterWave({ alt: '', sizes: '(min-width:900px) 22vw, 52vw' })}</div>
 <div class="reel__item reel__item--tall" data-reveal="curtain">${media.hair.straight({ alt: '', sizes: '(min-width:900px) 24vw, 56vw' })}</div>
 <div class="reel__item reel__item--short" data-reveal="curtain">${media.hair.wavy({ alt: '', sizes: '(min-width:900px) 20vw, 50vw' })}</div></div></div>
-<div class="wrap chapter__foot"><ul class="entries" data-stagger aria-label="Quick entry points">
+<div class="wrap chapter__foot"><ul class="entries" data-stagger>
 <li data-reveal><a href="/beauty/hair/"><span class="entries__num">01</span><span class="entries__name">Hair</span><span class="entries__note">Wigs, human hair &amp; extensions</span><span class="entries__thumb" aria-hidden="true">${media.hair.tightCurl({ alt: '', sizes: '120px' })}</span>${icon.arrow}</a></li>
 <li data-reveal><a href="/beauty/skincare/"><span class="entries__num">02</span><span class="entries__name">Skincare</span><span class="entries__note">A moment for yourself</span><span class="entries__thumb" aria-hidden="true">${media.skincare({ alt: '', sizes: '120px' })}</span>${icon.arrow}</a></li>
 <li data-reveal><a href="/beauty/home-decor/"><span class="entries__num">03</span><span class="entries__name">Home décor</span><span class="entries__note">For the spaces you love</span><span class="entries__thumb" aria-hidden="true">${media.decor({ alt: '', sizes: '120px' })}</span>${icon.arrow}</a></li></ul>

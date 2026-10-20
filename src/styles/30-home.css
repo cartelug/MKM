@@ -218,3 +218,5 @@
 .door__go svg { width: 26px; height: 26px; transition: transform 0.6s var(--ease); }
 .door:hover .door__go svg { transform: translateX(6px); }
 @media (min-width: 900px) { .doors { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+@media (min-width: 640px) and (max-width: 959px) { .frame--care { aspect-ratio: 5 / 4; } }

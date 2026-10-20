@@ -1,11 +1,12 @@
 // MKM Services V2 entry point. Core behaviour runs everywhere; page features load only when present.
-import { $, $$, wireDialogs } from './core.js';
+import { $, $$, doc, wireDialogs } from './core.js';
 import { arrival } from './preloader.js';
 import { initHeader } from './header.js';
 import { initMotion } from './motion.js';
 import { initAccordions } from './accordion.js';
 import { initTransitions } from './transitions.js';
 
+doc.classList.add('js-ok'); // tells the page's failsafe that scripting started
 const arrived = arrival();
 initHeader();
 initMotion(arrived);

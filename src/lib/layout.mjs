@@ -28,8 +28,11 @@ export const dockCta = {
 
 // One tiny inline script (allowed by hash in the CSP): flags scripting, and decides whether this
 // session still needs the logo arrival. The page is fully usable without it.
-export const bootstrapScript = `(function(){var h=document.documentElement;h.classList.add('js');try{var s=sessionStorage;if(!s.getItem('mkm-arrival')){s.setItem('mkm-arrival','1');h.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches?'pre-static':'pre');}}catch(e){}})();`;
+// Failsafe: if the main script has not started within 5 seconds, drop the scripting flag so nothing stays hidden.
+export const bootstrapScript = `(function(){var h=document.documentElement;h.classList.add('js');try{var s=sessionStorage;if(!s.getItem('mkm-arrival')){s.setItem('mkm-arrival','1');h.classList.add(matchMedia('(prefers-reduced-motion: reduce)').matches?'pre-static':'pre');}}catch(e){}setTimeout(function(){if(!h.classList.contains('js-ok'))h.classList.remove('js','pre','pre-static');},5000);})();`;
 export const bootstrapHash = `'sha256-${createHash('sha256').update(bootstrapScript).digest('base64')}'`;
+// One policy, used as the _headers header and as a <meta> fallback for hosts that ignore _headers (meta cannot carry frame-ancestors).
+export const contentSecurityPolicy = (withFrameAncestors = false) => `default-src 'self'; script-src 'self' ${bootstrapHash}; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'${withFrameAncestors ? "; frame-ancestors 'self'" : ''}`;
 
 const themeColors = { house: '#171614', care: '#294E45', beauty: '#5D1E2C', tax: '#203A66' };
 const absolute = path => site.siteUrl ? `${site.siteUrl}${path}` : path;
@@ -55,7 +58,7 @@ function head({ title, description, path, world, noindex, crumbs, preload = [] }
   const image = absolute('/assets/brand/og-image.png');
   const canonical = site.siteUrl && !noindex ? `<link rel="canonical" href="${absolute(path)}">` : '';
   const robots = (site.previewMode || noindex) ? '<meta name="robots" content="noindex,nofollow">' : '';
-  return `<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escape(full)}</title>
+  return `<head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy()}"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${escape(full)}</title>
 <meta name="description" content="${escape(description)}"><meta name="theme-color" content="${themeColors[world] ?? themeColors.house}"><meta name="color-scheme" content="light">${robots}${canonical}
 <meta property="og:site_name" content="${site.name}"><meta property="og:type" content="website"><meta property="og:title" content="${escape(full)}"><meta property="og:description" content="${escape(description)}">${site.siteUrl ? `<meta property="og:url" content="${absolute(path)}">` : ''}<meta property="og:image" content="${image}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="MKM Services. Care. Beauty. Tax.">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escape(full)}"><meta name="twitter:description" content="${escape(description)}"><meta name="twitter:image" content="${image}">
@@ -125,7 +128,7 @@ function footer(path) {
 
 const dialogs = {
   enquiry: `<dialog id="enquiry-dialog" class="sheet" aria-label="Your enquiry"><button class="sheet__close" type="button" data-close-dialog aria-label="Close">${icon.close}</button><div class="sheet__body" data-confirm-root></div></dialog>`,
-  lightbox: `<dialog id="lightbox" class="lightbox" aria-label="Image viewer"><button class="lightbox__close" type="button" data-close-dialog aria-label="Close image viewer">${icon.close}</button><figure class="lightbox__figure"><div class="lightbox__stage" data-lightbox-stage><img id="lightbox-image" src="" alt="" width="810" height="1080"></div><figcaption><span id="lightbox-caption"></span><span class="lightbox__hint">Tap or click the image to zoom</span></figcaption></figure><button class="lightbox__nav lightbox__nav--prev" type="button" aria-label="Previous image" data-lightbox-prev>${icon.prev}</button><button class="lightbox__nav lightbox__nav--next" type="button" aria-label="Next image" data-lightbox-next>${icon.next}</button><p class="lightbox__count" aria-live="polite" id="lightbox-count"></p></dialog>`,
+  lightbox: `<dialog id="lightbox" class="lightbox" aria-label="Image viewer"><button class="lightbox__close" type="button" data-close-dialog aria-label="Close image viewer">${icon.close}</button><figure class="lightbox__figure"><div class="lightbox__stage" data-lightbox-stage><img id="lightbox-image" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" width="810" height="1080"></div><figcaption><span id="lightbox-caption"></span><span class="lightbox__hint">Tap or click the image to zoom</span></figcaption></figure><button class="lightbox__nav lightbox__nav--prev" type="button" aria-label="Previous image" data-lightbox-prev>${icon.prev}</button><button class="lightbox__nav lightbox__nav--next" type="button" aria-label="Next image" data-lightbox-next>${icon.next}</button><p class="lightbox__count" aria-live="polite" id="lightbox-count"></p></dialog>`,
 };
 
 export function shell({ title, description = site.description, path = '/', content, tone = 'dark', world, noindex = false, crumbs, features = [], preload = [], bodyClass = '' }) {
@@ -133,5 +136,5 @@ export function shell({ title, description = site.description, path = '/', conte
   return `<!doctype html><html lang="en-AU" data-world="${room}">${head({ title, description, path, world: room, noindex, crumbs, preload })}
 <body class="${bodyClass}" data-world="${room}">${sprite()}${preloader()}${header(path, tone)}${menuPanel(path)}<div class="cursor" aria-hidden="true"><i></i><b></b></div>
 <main id="main" tabindex="-1">${content}</main>${footer(path)}${dock(path)}${features.map(f => dialogs[f]).join('')}
-<noscript><p class="noscript-note">Some interactive features need JavaScript. You can still explore every page, and Care enquiries can be made through ${site.careSite.label}.</p></noscript></body></html>`;
+<p class="noscript-note">Some interactive features need JavaScript. You can still explore every page, and Care enquiries can be made through ${site.careSite.label}.</p></body></html>`;
 }

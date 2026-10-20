@@ -11,17 +11,17 @@
 .site-header.is-solid .site-header__bar { height: calc(var(--hdr-h) * 0.72); }
 .site-header.is-hidden { transform: translate3d(0, -101%, 0); }
 
-.brand { position: relative; display: block; width: clamp(104px, 9vw, 132px); flex: none; transition: width 0.55s var(--ease), opacity 0.5s var(--ease); }
+.brand { position: relative; display: block; width: clamp(104px, 9vw, 132px); flex: none; box-sizing: content-box; padding-block: 8px; margin-block: -8px; transition: width 0.55s var(--ease), opacity 0.5s var(--ease); }
 .site-header.is-solid .brand { width: clamp(88px, 7.4vw, 108px); }
 .brand__logo { width: 100%; height: auto; transition: opacity 0.5s var(--ease); }
-.brand__logo--dark { position: absolute; inset: 0; opacity: 0; }
+.brand__logo--dark { position: absolute; inset: 8px 0 auto 0; opacity: 0; }
 .site-header[data-tone='light'] .brand__logo--light { opacity: 0; }
 .site-header[data-tone='light'] .brand__logo--dark { opacity: 1; }
 .brand__sub { position: absolute; left: 0; bottom: -0.15rem; font-size: 0; }
 .page-home .site-header.is-over-hero .brand { opacity: 0; visibility: hidden; }
 
 .site-nav { display: none; margin-left: auto; gap: clamp(1.4rem, 2.6vw, 2.8rem); }
-.site-nav a { position: relative; display: inline-flex; align-items: center; min-height: 44px; font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+.site-nav a { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding-inline: 0.5rem; margin-inline: -0.5rem; font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
 .site-nav a span { background: linear-gradient(currentColor, currentColor) no-repeat 100% 100% / 0 1px; padding-bottom: 4px; transition: background-size 0.55s var(--ease); }
 .site-nav a:hover span, .site-nav a:focus-visible span, .site-nav a[aria-current='page'] span { background-position: 0 100%; background-size: 100% 1px; }
 .header-cta { display: none; align-items: center; gap: 0.7rem; min-height: 44px; padding: 0 1.1rem 0 1.25rem; border: 1px solid currentColor; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; transition: background-color 0.4s var(--ease), color 0.4s var(--ease), border-color 0.4s; }
@@ -43,6 +43,19 @@
 .menu-open .brand__logo--dark { opacity: 0; }
 .menu-open .brand { opacity: 1; visibility: visible; }
 
+/* Without scripting (or if it fails) the header cannot track scrolling, so it stays solid. */
+html:not(.js) .site-header[data-tone='dark'] { background: var(--ink); }
+html:not(.js) .site-header[data-tone='light'] { background: var(--paper); box-shadow: 0 1px 0 var(--line); }
+html:not(.js) .noscript-note { display: block; }
+/* Without scripting (or if it fails) the menu cannot open, so the links sit in a wrapped strip under the bar. */
+@media (max-width: 960px) {
+  html:not(.js) { --hdr-h: 112px; }
+  html:not(.js) .menu-toggle { display: none; }
+  html:not(.js) .site-header__bar { flex-wrap: wrap; align-content: center; gap: 0 1.4rem; height: var(--hdr-h); }
+  html:not(.js) .header-cta { display: inline-flex; margin-left: auto; }
+  html:not(.js) .site-nav { display: flex; flex-wrap: wrap; flex-basis: 100%; order: 3; margin: 0; gap: 0 1.4rem; }
+  html:not(.js) .site-header.is-solid .site-header__bar { height: var(--hdr-h); }
+}
 @media (min-width: 961px) {
   .site-nav, .header-cta { display: flex; }
   .menu-toggle, .menu { display: none; }
@@ -125,7 +138,7 @@
 .footer-col__title { display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 1rem; font-family: var(--font-display); font-size: 1.7rem; line-height: 1; }
 .footer-col__title span { font-family: var(--font-ui); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.2em; color: var(--brass-light); }
 .footer-col { min-width: 0; }
-.footer-col a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; overflow-wrap: anywhere; font-size: 0.9375rem; color: rgba(245, 240, 232, 0.82); transition: color 0.3s; }
+.footer-col a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; overflow-wrap: anywhere; font-size: 0.9375rem; color: rgba(245, 240, 232, 0.82); transition: color 0.3s; }
 .footer-col a:hover { color: var(--paper); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .footer-col a svg { width: 14px; height: 14px; }
 .footer-bottom { display: flex; flex-wrap: wrap; gap: 0.6rem 2rem; padding-top: 1.6rem; border-top: 1px solid var(--line); font-size: 0.8125rem; color: rgba(245, 240, 232, 0.74); }
@@ -189,4 +202,4 @@ html.has-cursor body, html.has-cursor a, html.has-cursor button, html.has-cursor
 html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor: text; }
 html.has-cursor select { cursor: pointer; }
 
-.noscript-note { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; padding: 0.9rem var(--gutter); background: var(--ink); color: var(--paper); font-size: 0.875rem; }
+.noscript-note { display: none; position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; padding: 0.9rem var(--gutter); background: var(--ink); color: var(--paper); font-size: 0.875rem; }

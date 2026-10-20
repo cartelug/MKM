@@ -12,8 +12,9 @@ const enquiryHref = t => `/shop/hair-enquiry/?texture=${encodeURIComponent(t.nam
 const zoomBtn = (t, group = 'hair') => `<button class="tex__zoom" type="button" data-lightbox="${group}" data-full="/assets/hair/${t.image}" data-alt="${escape(t.alt)}" data-caption="${t.name} · Style inspiration · exact product to confirm" aria-label="Enlarge ${t.name} photograph">${icon.zoom}</button>`;
 const note = `<p class="image-note">${site.photoNote}</p>`;
 
+const sendWays = [site.whatsappNumber && 'on WhatsApp', site.contactEmail && 'by email'].filter(Boolean).join(' or ');
 const hairFaqs = [
-  ['How do I order?', 'Choose your texture, length and colour preference, then review your enquiry message. You can send it to Monica yourself once WhatsApp or email is connected, or copy it. MKM confirms the details with you before any order is placed.'],
+  ['How do I order?', `Choose your texture, length and colour preference, then review your enquiry message. ${sendWays ? `You can send it to Monica ${sendWays}, or copy it.` : 'You can copy it and send it to Monica yourself.'} MKM confirms the details with you before any order is placed.`],
   ['Are the listed prices in US dollars?', 'Yes. All listed prices are in USD and are length references. The exact product, any texture or construction adjustments, taxes and delivery costs are confirmed with MKM.'],
   ['Is every length, texture and colour available?', 'Availability is checked directly. Choosing an option is an enquiry about your preference. It does not reserve stock, and the photographs are style inspiration until product details are confirmed.'],
   ['Can you help me choose a texture?', 'Yes. Say what you are looking for in your enquiry and ask for current photographs, specifications and advice before you decide.'],

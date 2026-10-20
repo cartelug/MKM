@@ -4,7 +4,7 @@ import { $, $$ } from './core.js';
 import { renderConfirm } from './enquiry.js';
 
 const privacy = {
-  care: 'Please keep medical details, NDIS or identity numbers and other sensitive information out of this first message.',
+  care: 'Please keep medical details, identity numbers and other sensitive information out of this first message.',
   beauty: 'Tell Monica what you are looking for. Final products, prices and availability are confirmed with you directly.',
   tax: 'Please keep your tax file number, bank details and other identity information out of this first message.',
   general: 'Share as much or as little as you like. Please keep sensitive personal information out of this first message.',

@@ -34,7 +34,7 @@ export function monicaWelcome({ cta = true } = {}) {
   return `<section class="section welcome" data-world="house" data-tone="light"><div class="wrap welcome__layout">
 <div class="welcome__art" data-reveal="curtain" aria-hidden="true"><div class="welcome__arch"><svg class="welcome__mark" viewBox="0 0 ${width} ${height}" focusable="false"><use href="#mkm-p1"/><use href="#mkm-p2"/></svg><span class="welcome__sig">Monica</span></div><span class="welcome__line"></span></div>
 <div class="welcome__copy">${label('A personal welcome')}<blockquote class="welcome__quote" data-split>${monicaQuote}</blockquote>
-<ul class="welcome__tags" aria-label="What Monica can help with"><li class="tag tag--care">Care enquiries welcome</li><li class="tag tag--beauty">Beauty enquiries welcome</li><li class="tag tag--tax">Tax enquiries welcome</li></ul>
+<ul class="welcome__tags"><li class="tag tag--care">Care enquiries welcome</li><li class="tag tag--beauty">Beauty enquiries welcome</li><li class="tag tag--tax">Tax enquiries welcome</li></ul>
 ${cta ? `<div class="welcome__cta" data-reveal>${button('Message Monica', '/contact/', { kind: 'ink' })}</div>` : ''}</div></div></section>`;
 }
 

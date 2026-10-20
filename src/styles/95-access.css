@@ -1,0 +1,14 @@
+/* Windows high-contrast / forced-colors: keep every control, selected state and focus ring distinguishable
+   with system colours, and drop purely decorative layers. */
+@media (forced-colors: active) {
+  .btn, .header-cta, .chip span, .len-option span, .tag, .stepper, .faq__q i, .round-btn, .door, .path__go, .edcard a, .menu__cta, .dock, .tex__zoom, .lightbox__nav { border: 1px solid ButtonText; }
+  .btn__fill, .grain, .preloader, .cursor { display: none !important; }
+  .btn:hover, .btn:focus-visible, .header-cta:hover, .door:hover, .edcard a:hover { background: Highlight; color: HighlightText; }
+  .chip input:checked + span, .len-option input:checked + span, .tex-option input:checked ~ .tex-option__name { background: Highlight; color: HighlightText; forced-color-adjust: none; }
+  .tex-option input:checked ~ .tex-option__img { outline: 3px solid Highlight; }
+  :focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }
+  [data-reveal='curtain']::after, .frame::after { display: none; }
+  .hero::after, .chapter::after, .phero::after, .trust::after, .site-footer::after, .sclose::after, .manifest::after, .expect::after, .hscroll::after { display: none; }
+  .site-progress span { background: Highlight; }
+  .label::before, .footer-col, .rules li::before, .step::before { forced-color-adjust: none; }
+}

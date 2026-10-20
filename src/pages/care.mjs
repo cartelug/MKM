@@ -24,7 +24,7 @@ const banner = `<section class="care-banner" data-world="care" data-tone="dark" 
 
 const how = steps([
   ['Say hello', 'Send a short message to Monica, or begin on the MKM Care website. You do not need the right words.'],
-  ['Share what matters', 'Tell us what you are looking for, in your own words. Please keep sensitive medical details for later.'],
+  ['Share what matters', 'Tell Monica what you are looking for, in your own words. Please keep sensitive medical details for later.'],
   ['Talk through the options', 'Monica gets back to you to talk about what support could look like and what the next steps are.'],
   ['Take the next step, together', 'Decide what feels right, at your own pace. There is no pressure to go ahead.'],
 ], { id: 'how-support-begins', kicker: 'How support begins', title: 'Four calm steps, <em>one conversation at a time.</em>', world: 'care' });
