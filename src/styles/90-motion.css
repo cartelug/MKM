@@ -1,0 +1,62 @@
+/* Motion system: purposeful, expensive-feeling, always optional.
+   Only transform and opacity are animated; every rule sits behind scripting and reduced-motion guards. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Generic fade-up reveal */
+  .js [data-reveal]:not([data-reveal='curtain']) { opacity: 0; transform: translate3d(0, 28px, 0); transition: opacity 0.9s var(--ease), transform 1.1s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
+  .js [data-reveal='panel']:not(.is-in) { transform: translate3d(0, 56px, 0); }
+  .js [data-reveal]:not([data-reveal='curtain']).is-in { opacity: 1; transform: none; }
+
+  /* Curtain: a vertical panel lifts to uncover the photograph, which settles from a slight zoom */
+    .js [data-reveal='curtain']::after { content: ''; position: absolute; inset: 0; z-index: 3; background: var(--curtain, var(--paper)); transform-origin: 50% 0; transform: scaleY(1); pointer-events: none; transition-delay: calc(var(--i, 0) * 90ms); }
+  .js [data-reveal='curtain'].is-in::after { transform: scaleY(0); transition: transform 1.15s var(--ease); transition-delay: calc(var(--i, 0) * 90ms); }
+  .js [data-reveal='curtain'] img { transition: transform 1.8s var(--ease); }
+  .js [data-reveal='curtain']:not(.is-in) img { transform: scale(1.14); }
+
+  /* Split headings: words rise from a mask */
+  .js [data-split].is-split:not(.is-in) .wi { transform: translate3d(0, 112%, 0); }
+  .js [data-split].is-split.is-in .wi { transform: none; transition: transform 0.85s var(--ease); transition-delay: calc(var(--i, 0) * 42ms); }
+
+  /* Ruled lines draw in, then content follows */
+  .js .rules li::before, .js .rules li:last-child::after { transform: scaleX(0); transition: transform 1.2s var(--ease); transition-delay: calc(var(--i, 0) * 120ms); }
+  .js .rules li.is-in::before, .js .rules li.is-in:last-child::after { transform: scaleX(1); }
+  .js .rules li > * { opacity: 0; transform: translate3d(0, 10px, 0); transition: opacity 0.8s var(--ease), transform 0.9s var(--ease); transition-delay: calc(var(--i, 0) * 120ms + 350ms); }
+  .js .rules li.is-in > * { opacity: 1; transform: none; }
+  .js .rules li { opacity: 1 !important; transform: none !important; }
+
+  /* Hairlines on hairline-led lists */
+  .js .trust__list li, .js .doors li { transition-property: opacity, transform; }
+
+  /* Hero intro: copy settles after the logo arrival */
+  .js .hero__brand { opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity 0.9s var(--ease), transform 1s var(--ease); }
+  .js.is-ready .hero__brand { opacity: 1; transform: none; }
+  .js .hero__sub, .js .hero__actions { transform: translate3d(0, 18px, 0); transition: transform 1.1s var(--ease) 0.1s; }
+  .js.is-ready .hero__sub, .js.is-ready .hero__actions { transform: none; }
+
+  /* Page transitions: refined crossfade plus short vertical reveal (cross-document view transitions) */
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation: vt-out 0.28s var(--ease) both; }
+  ::view-transition-new(root) { animation: vt-in 0.62s var(--ease) 0.06s both; }
+  ::view-transition-group(site-header) { animation-duration: 0s; }
+  @keyframes vt-out { to { opacity: 0; transform: translate3d(0, -10px, 0); } }
+  @keyframes vt-in { from { opacity: 0; transform: translate3d(0, 22px, 0); } }
+
+  /* Fallback page exit for browsers without view transitions */
+  .is-leaving main, .is-leaving .site-footer { opacity: 0; transform: translate3d(0, -8px, 0); transition: opacity 0.26s ease, transform 0.26s ease; }
+}
+
+/* Lighter motion on low-power devices */
+.lite .hero__light, .lite .hero__cue i::after { animation: none; }
+.lite [data-reveal]:not([data-reveal='curtain']) { transition-duration: 0.5s !important; }
+.lite .frame__inner, .lite .reel__track { will-change: auto; }
+.lite html.has-cursor .cursor { display: none; }
+
+/* Reduced motion: everything visible and still; interactions keep clear state changes without movement */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+  .hero__light, .hero__cue i::after { animation: none !important; }
+  .site-progress { display: none; }
+  .frame__inner, .sheet-col, .reel__track { transform: none !important; }
+  .btn { transform: none !important; }
+  .cursor { display: none !important; }
+}
