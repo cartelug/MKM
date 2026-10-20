@@ -4,6 +4,9 @@ import { money, normalizeSelection, quote, orderMessage, colourLabel } from './o
 import { $, $$, openDialog } from './core.js';
 import { renderConfirm } from './enquiry.js';
 
+// Photograph URLs are resolved from this module, so they work wherever the site is hosted.
+const hairUrl = file => new URL(`../hair/${file}`, import.meta.url).href;
+
 export function initHairBuilder() {
   const form = $('#hair-form');
   if (!form) return;
@@ -38,14 +41,14 @@ export function initHairBuilder() {
     const set = () => {
       if (rendered) return;
       const base = texture.image.replace('.webp', '');
-      image.src = `/assets/hair/${base}-640.webp`;
-      image.srcset = `/assets/hair/${base}-480.webp 480w, /assets/hair/${base}-640.webp 640w, /assets/hair/${texture.image} 810w`;
+      image.src = hairUrl(`${base}-640.webp`);
+      image.srcset = `${hairUrl(`${base}-480.webp`)} 480w, ${hairUrl(`${base}-640.webp`)} 640w, ${hairUrl(texture.image)} 810w`;
       image.alt = texture.alt;
       stage.classList.remove('is-swapping');
     };
     if (first) set();
     else { stage.classList.add('is-swapping'); setTimeout(set, 220); }
-    zoom.dataset.full = `/assets/hair/${texture.image}`;
+    zoom.dataset.full = hairUrl(texture.image);
     zoom.dataset.alt = texture.alt;
     zoom.dataset.caption = `${texture.name} · Style inspiration · exact product to confirm`;
     $('[data-builder-label]').textContent = `${texture.name} · style inspiration`;
