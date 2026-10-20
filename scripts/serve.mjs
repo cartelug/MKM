@@ -8,12 +8,18 @@ import { fileURLToPath } from 'node:url';
 
 const root = process.env.MKM_OUT ? path.resolve(process.env.MKM_OUT) : path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.xml': 'application/xml', '.webmanifest': 'application/manifest+json' };
+const prefix = (process.env.MKM_PREFIX ?? '').replace(/\/+$/, ''); // e.g. /MKM to simulate a project page
 const compressible = new Set(['.html', '.css', '.js', '.json', '.txt', '.svg', '.xml', '.webmanifest']);
 
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
-    const pathname = decodeURIComponent(url.pathname);
+    let pathname = decodeURIComponent(url.pathname);
+    if (prefix) {
+      if (pathname === prefix) { res.writeHead(301, { Location: prefix + '/' + url.search }); res.end(); return; }
+      if (!pathname.startsWith(prefix + '/')) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found (outside the simulated sub-folder)'); return; }
+      pathname = pathname.slice(prefix.length);
+    }
     if (pathname.split('/').some(part => part.startsWith('.') && part !== '')) { res.writeHead(404); res.end('Not found'); return; }
     let filename = path.resolve(root, '.' + pathname);
     if (!filename.startsWith(root + path.sep) && filename !== root) { res.writeHead(403); res.end('Forbidden'); return; }

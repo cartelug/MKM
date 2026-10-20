@@ -13,10 +13,20 @@ npm run build   # writes dist/
 npm test        # node tests + dist integrity check
 npm start       # preview at http://localhost:4173 (gzip/brotli, real 404s, cache headers)
 npm run check   # build + test
+npm run publish:root   # build, then copy the site into the repository root (see Hosting)
 npm run test:e2e   # optional browser tests (needs Playwright, see below)
 ```
 
-`dist/` is committed because the static host serves it. Rebuild before committing. The source uses root-relative URLs, so deploy at a domain root.
+## Hosting
+
+The built site is committed in two places that always match:
+
+* **`dist/`** is the build output (used by `.openai/hosting.json`).
+* **The repository root** (`index.html`, `assets/`, `care/`, `beauty/`, ...) is the same site, so a host that serves the repo root, such as GitHub Pages with "Deploy from a branch: main / (root)", finds `index.html` there. `.nojekyll` makes it serve files exactly as they are.
+
+After any change, run `npm run publish:root` (it builds, refreshes `dist/` and the root copy, and records what it published in `.root-publish.json`), then commit. A test fails if the root copy and `dist/` drift apart.
+
+All URLs in the pages are document-relative, so the site works at a domain root and in a sub-folder such as `https://user.github.io/MKM/`. The one exception is `404.html`, which hosts serve for URLs at any depth, so it uses root-relative URLs and is only fully styled when the site sits at a domain root. To preview a sub-folder deployment locally: `MKM_PREFIX=/MKM npm start` and open `http://localhost:4173/MKM/`.
 
 ## Pages
 
@@ -37,6 +47,7 @@ npm run test:e2e   # optional browser tests (needs Playwright, see below)
 | `src/styles/` | Ordered CSS: tokens, chrome, components, home, pages, motion. Concatenated and minified into `assets/site.css` |
 | `src/scripts/` | ES modules: `main.js` entry, `motion.js`, `header.js`, `preloader.js`, plus lazily loaded features (`contact`, `hair`, `lightbox`, `hscroll`, ...) |
 | `public/assets/` | Brand marks, photography, responsive derivatives, fonts |
+| `scripts/publish-root.mjs` | Builds and copies the site into the repository root |
 | `scripts/assets/` | One-off Python/Node scripts that produced the generated assets (see its README) |
 
 To change copy, edit the page file. To change colours, type or spacing, edit `src/styles/00-tokens.css`.

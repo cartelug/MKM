@@ -5,6 +5,7 @@ import { site } from '../src/config/runtime.mjs';
 import { pages, notFoundPage } from '../src/pages/index.mjs';
 import { bootstrapHash } from '../src/lib/layout.mjs';
 import { minifyCss } from './lib/minify-css.mjs';
+import { relativizeHtml } from './lib/relative-urls.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = process.env.MKM_OUT ? path.resolve(process.env.MKM_OUT) : path.join(root, 'dist');
@@ -25,14 +26,15 @@ await cp(path.join(root, 'public'), dist, { recursive: true });
 for (const [filename, render] of pages) {
   const destination = path.join(dist, filename);
   await mkdir(path.dirname(destination), { recursive: true });
-  await writeFile(destination, render());
+  await writeFile(destination, relativizeHtml(render(), filename));
 }
 if (notFoundPage) await writeFile(path.join(dist, '404.html'), notFoundPage());
 
 // One stylesheet, concatenated in file order.
 const styleFiles = (await readdir(src('styles'))).filter(f => f.endsWith('.css')).sort();
 const css = (await Promise.all(styleFiles.map(f => readFile(src(`styles/${f}`), 'utf8')))).join('\n');
-await writeFile(path.join(dist, 'assets/site.css'), minifyCss(css));
+// site.css lives in assets/, so font URLs become relative to it.
+await writeFile(path.join(dist, 'assets/site.css'), minifyCss(css.replaceAll('url(/assets/', 'url(')));
 
 // Browser modules. site.js is generated so deploy-time overrides reach the browser too.
 const js = path.join(dist, 'assets/js');
@@ -54,12 +56,12 @@ if (origin && !site.previewMode) {
   await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>\n`);
 }
 await writeFile(path.join(dist, 'manifest.webmanifest'), JSON.stringify({
-  name: site.name, short_name: 'MKM', description: site.description, start_url: '/', scope: '/', display: 'standalone',
+  name: site.name, short_name: 'MKM', description: site.description, start_url: './', scope: './', display: 'standalone',
   background_color: '#171614', theme_color: '#171614', lang: 'en-AU',
   icons: [
-    { src: '/assets/brand/icon-192.png', sizes: '192x192', type: 'image/png' },
-    { src: '/assets/brand/icon-512.png', sizes: '512x512', type: 'image/png' },
-    { src: '/assets/brand/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'assets/brand/icon-192.png', sizes: '192x192', type: 'image/png' },
+    { src: 'assets/brand/icon-512.png', sizes: '512x512', type: 'image/png' },
+    { src: 'assets/brand/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
 }, null, 2) + '\n');
 const csp = `default-src 'self'; script-src 'self' ${bootstrapHash}; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none'; object-src 'none'; frame-ancestors 'self'`;

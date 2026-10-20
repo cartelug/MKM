@@ -2,16 +2,35 @@
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit, unquote
+import posixpath
 import re
 
 ROOT = Path(__file__).resolve().parents[1] / 'dist'
-VOID = {'img', 'meta', 'link', 'br', 'hr', 'input', 'source', 'use', 'path', 'circle', 'rect', 'stop'}
+
+
+def resolve(page_key, ref):
+    """Resolve a link or asset reference found on `page_key` ('/care/index.html') to a site path and fragment."""
+    url = urlsplit(ref)
+    if url.path.startswith('/'):
+        path = url.path
+    elif url.path == '':
+        path = page_key
+    else:
+        path = posixpath.normpath(posixpath.join(posixpath.dirname(page_key), url.path))
+        if url.path.endswith('/') and not path.endswith('/'):
+            path += '/'
+    return path, url.fragment
+
+
+def is_internal(ref):
+    return not urlsplit(ref).scheme and not ref.startswith(('data:', '#', '//'))
 
 
 class Page(HTMLParser):
     def __init__(self, path):
         super().__init__()
         self.path = path
+        self.key = '/' + str(path.relative_to(ROOT))
         self.ids, self.links, self.errors = set(), [], []
         self.h1 = self.main = self.eager = self.high = 0
         self.title = self.description = False
@@ -37,6 +56,12 @@ class Page(HTMLParser):
             self.title = True
         if tag == 'meta' and a.get('name') == 'description':
             self.description = bool(a.get('content'))
+        # Pages (except the 404, served at any depth) must use document-relative URLs so the site works in any folder.
+        if self.key != '/404.html':
+            for attr in ('href', 'src', 'data-full'):
+                value = a.get(attr) or ''
+                if value.startswith('/') and not value.startswith('//'):
+                    self.errors.append(f'Root-relative URL (breaks when hosted in a sub-folder): {attr}="{value}"')
         for attr in ('aria-controls', 'aria-labelledby', 'aria-describedby'):
             for ref in (a.get(attr) or '').split():
                 self.refs.append((attr, ref))
@@ -72,12 +97,14 @@ class Page(HTMLParser):
                     self.errors.append('srcset with width descriptors needs sizes: ' + a.get('src', ''))
                 for candidate in a['srcset'].split(','):
                     asset = candidate.strip().split()[0]
-                    if not (ROOT / asset.lstrip('/')).is_file():
+                    if self.key != '/404.html' and asset.startswith('/'):
+                        self.errors.append('Root-relative srcset URL: ' + asset)
+                    if not (ROOT / resolve(self.key, asset)[0].lstrip('/')).is_file():
                         self.errors.append('Missing responsive image ' + asset)
         if tag in ['img', 'script', 'link']:
             src = a.get('src') if tag != 'link' else a.get('href')
-            if src and not urlsplit(src).scheme and not src.startswith('data:'):
-                if not (ROOT / urlsplit(src).path.lstrip('/')).is_file():
+            if src and is_internal(src):
+                if not (ROOT / resolve(self.key, src)[0].lstrip('/')).is_file():
                     self.errors.append('Missing asset ' + src)
 
     def handle_endtag(self, tag):
@@ -116,19 +143,13 @@ for name, p in pages.items():
     if p.high > 1:
         p.errors.append('More than one fetchpriority=high image')
     for link in p.links:
-        url = urlsplit(link)
-        if url.scheme:
+        if urlsplit(link).scheme:
             continue
-        if not url.path:
-            target_name = name
-        elif url.path.endswith('/'):
-            target_name = url.path + 'index.html'
-        else:
-            target_name = url.path
-        target = pages.get(target_name)
+        path, fragment = resolve(name, link)
+        target = pages.get(path + 'index.html' if path.endswith('/') else path)
         if not target:
             p.errors.append('Missing route ' + link)
-        elif url.fragment and unquote(url.fragment) not in target.ids:
+        elif fragment and unquote(fragment) not in target.ids:
             p.errors.append('Missing fragment ' + link)
     errors.extend(f'{name}: {e}' for e in p.errors)
     text = p.path.read_text()
@@ -143,7 +164,9 @@ for css in (ROOT / 'assets').rglob('*.css'):
     for url in re.findall(r'url\(\s*[\'"]?([^)\'"]+)', css.read_text()):
         if url.startswith('data:') or url.startswith('%23'):
             continue
-        if url.startswith('/') and not (ROOT / url.lstrip('/')).exists():
+        if url.startswith('/'):
+            errors.append('Root-relative CSS URL (breaks in a sub-folder): ' + url)
+        elif not (css.parent / url).exists():
             errors.append('Missing CSS asset ' + url)
 for js in (ROOT / 'assets').rglob('*.js'):
     code = js.read_text()

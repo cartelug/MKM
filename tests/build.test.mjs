@@ -107,10 +107,10 @@ test('the Content-Security-Policy allows exactly the one inline bootstrap script
 test('web manifest, icons and social image exist and are referenced', () => {
   const manifest = JSON.parse(read(preview.out, 'manifest.webmanifest'));
   assert.equal(manifest.name, 'MKM Services');
-  assert.equal(manifest.start_url, '/');
-  for (const icon of manifest.icons) assert.ok(exists(preview.out, icon.src.slice(1)), icon.src);
+  assert.equal(manifest.start_url, './');
+  for (const icon of manifest.icons) assert.ok(exists(preview.out, icon.src), icon.src);
   for (const file of ['assets/brand/og-image.png', 'assets/brand/favicon-32.png', 'assets/brand/apple-touch-icon.png', 'assets/brand/favicon.ico']) assert.ok(exists(preview.out, file), file);
-  assert.match(read(preview.out, 'index.html'), /<link rel="manifest" href="\/manifest\.webmanifest">/);
+  assert.match(read(preview.out, 'index.html'), /<link rel="manifest" href="\.\/manifest\.webmanifest">/);
 });
 
 test('no unverified contact details, currencies or invented claims appear on any page', () => {
@@ -132,4 +132,24 @@ test('the official Care website reference is kept exactly and opens safely', () 
 test('each service world uses its own smart call to action', () => {
   const expect = { 'care/index.html': 'Talk through your support needs', 'beauty/index.html': 'Start a beauty enquiry', 'tax/index.html': 'Discuss your tax support', 'index.html': 'Speak with Monica' };
   for (const [file, cta] of Object.entries(expect)) assert.match(read(preview.out, file), new RegExp(`dock__text"><small>[^<]*</small><strong>${cta}</strong>`), file);
+});
+
+test('every URL is document-relative so the site works at a domain root or in any sub-folder (except the 404, which is served at any depth)', () => {
+  const rootRelative = /\s(?:href|src|data-full|poster)="\/(?!\/)/;
+  for (const file of htmlFiles(preview.out)) {
+    const html = read(preview.out, file);
+    if (file === '404.html') { assert.match(html, /href="\/assets\/site\.css"/); continue; }
+    assert.doesNotMatch(html, rootRelative, `${file} has a root-relative URL`);
+    assert.doesNotMatch(html, /srcset="[^"]*(?:^|, )\/assets/, `${file} has a root-relative srcset`);
+  }
+  const home = read(preview.out, 'index.html');
+  assert.match(home, /<link rel="stylesheet" href="\.\/assets\/site\.css">/);
+  assert.match(home, /<a class="[^"]*" href="\.\/care\/"/);
+  assert.match(read(preview.out, 'care/index.html'), /<link rel="stylesheet" href="\.\.\/assets\/site\.css">/);
+  assert.match(read(preview.out, 'care/index.html'), /href="\.\.\/beauty\/"/);
+  assert.match(read(preview.out, 'beauty/hair/index.html'), /<link rel="stylesheet" href="\.\.\/\.\.\/assets\/site\.css">/);
+  assert.match(read(preview.out, 'beauty/hair/index.html'), /src="\.\.\/\.\.\/assets\/media\//);
+  assert.doesNotMatch(read(preview.out, 'assets/site.css'), /url\(\s*\//);
+  assert.match(read(preview.out, 'assets/site.css'), /url\(fonts\/font-2\.woff2\)/);
+  assert.doesNotMatch(read(preview.out, 'assets/js/hair.js'), /[`'"]\/assets\//);
 });

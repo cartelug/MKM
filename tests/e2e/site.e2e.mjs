@@ -13,18 +13,20 @@ catch { try { playwright = await import(process.env.PLAYWRIGHT_MODULE ?? '/opt/n
 const skip = playwright ? false : 'Playwright is not installed (see tests/e2e/site.e2e.mjs)';
 
 const servers = [];
-function serve(dir, port) {
+function serve(dir, port, prefix = '') {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [path.join(root, 'scripts/serve.mjs')], { env: { ...process.env, MKM_OUT: dir, PORT: String(port) } });
+    const child = spawn('node', [path.join(root, 'scripts/serve.mjs')], { env: { ...process.env, MKM_OUT: dir, PORT: String(port), MKM_PREFIX: prefix } });
     servers.push(child);
     child.stdout.on('data', d => String(d).includes('local preview') && resolve(`http://localhost:${port}`));
     child.on('error', reject);
   });
 }
-let browser, base, liveBase;
+let browser, base, liveBase, folderBase;
 before(async () => {
   if (skip) return;
-  base = await serve(build().out, 4391);
+  const preview = build().out;
+  base = await serve(preview, 4391);
+  folderBase = await serve(preview, 4393, '/MKM') + '/MKM';
   liveBase = await serve(build({ SITE_PREVIEW: 'false', SITE_URL: 'https://www.example.test', WHATSAPP_NUMBER: '61400000000', CONTACT_EMAIL: 'hello@example.test' }).out, 4392);
   browser = await playwright.chromium.launch();
 });
@@ -290,5 +292,37 @@ test('the contact dock is discreet: hidden at the top, shown after reading, dism
   assert.equal(await page.locator('[data-dock]').evaluate(e => e.classList.contains('is-visible')), false);
   await page.goto(base + '/contact/');
   assert.equal(await page.locator('[data-dock]').count(), 0);
+  await context.close();
+});
+
+test('hosted in a sub-folder (like a GitHub Pages project page) everything still loads, styles and navigates', { skip }, async () => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await context.addInitScript(() => sessionStorage.setItem('mkm-arrival', '1'));
+  const page = await context.newPage();
+  const failed = [];
+  page.on('response', r => r.status() >= 400 && failed.push(`${r.status()} ${r.url()}`));
+  page.on('pageerror', e => failed.push(e.message));
+  await page.goto(folderBase + '/');
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgb(245, 240, 232)', 'stylesheet applied');
+  assert.equal(await page.evaluate(() => document.fonts.check('16px "Cormorant Garamond"')), true);
+  assert.ok(await page.locator('.brand__logo--light').evaluate(i => i.complete && i.naturalWidth > 0));
+  await page.locator('.site-nav a[href$="care/"]').click();
+  await page.waitForURL('**/MKM/care/');
+  assert.match(await page.locator('h1').innerText(), /People first/);
+  // lazily imported modules and photograph URLs resolve from their own location
+  await page.goto(folderBase + '/shop/hair-enquiry/');
+  await ready(page, '#hair-form');
+  await page.locator('label.tex-option:has-text("Water Wave")').click();
+  await page.waitForTimeout(500);
+  const src = await page.locator('#builder-image').getAttribute('src');
+  assert.match(src, /\/MKM\/assets\/hair\/08-wet-look-curl-640\.webp$/);
+  assert.ok(await page.locator('#builder-image').evaluate(i => i.complete && i.naturalWidth > 0));
+  await page.goto(folderBase + '/beauty/');
+  await ready(page, '[data-lightbox]');
+  await page.locator('.tex__zoom').first().click();
+  await page.waitForSelector('#lightbox[open]');
+  assert.ok(await page.locator('#lightbox-image').evaluate(i => i.complete && i.naturalWidth > 0));
+  assert.deepEqual(failed, []);
   await context.close();
 });
